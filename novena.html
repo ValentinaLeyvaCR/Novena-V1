@@ -10,14 +10,14 @@
             --color-principal: #0a4a24;
             --color-secundario: #d42a2a;
             --color-oro: #f7b731;
-            --color-fondo: #0f1a2e;
+            --color-fondo: #0f1a2e; /* Fondo cielo nocturno */
             --color-texto: #333;
             --color-claro: #ffffff;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* CAMBIO: Se elimina 'scroll-behavior: smooth;' para evitar conflictos */
+        /* Arreglo de Scroll: Se elimina 'scroll-behavior: smooth;' */
         html { } 
 
         body {
@@ -27,7 +27,7 @@
             line-height: 1.6;
         }
 
-        /* --- ESTRELLAS PARPADEANTES --- */
+        /* --- ESTRELLAS PARPADEANTES (DINÁMICO) --- */
         @keyframes twinkle {
             0% { opacity: 0.2; } 50% { opacity: 0.8; } 100% { opacity: 0.2; }
         }
@@ -188,12 +188,21 @@
             margin-top: 15px; font-style: italic;
             font-weight: 500; color: #555;
         }
-        audio { width: 100%; margin-top: 15px; }
+        
+        /* CAMBIO V9.0: Estilo para el botón de YouTube */
+        .btn-villancico {
+            background-color: #CD201F; /* Color rojo de YouTube */
+            color: white;
+            margin-top: 15px;
+        }
+        .btn-villancico:hover {
+            background-color: #a41a1a;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
-
-    <audio id="musica-fondo" src="musica-fondo.mp3" loop preload="auto"></audio>
 
     <div class="stars">
         <div class="star"></div><div class="star"></div><div class="star"></div>
@@ -334,7 +343,9 @@ ofendido a un Dios y esa ofensa infinita no podría ser condonada sino por los m
             <details>
                 <summary>Antón tiruriruriru</summary>
                 <div class="contenido-expandible">
-                    <audio controls src="anton.mp3">Tu navegador no soporta audio.</audio>
+                    <a href="https://www.youtube.com/watch?v=0gofp7K6-Fw" target="_blank" rel="noopener noreferrer" class="btn btn-villancico">
+                        🎶 Escuchar en YouTube
+                    </a>
                     <hr style="margin:15px 0;">
                     <p>
 Antón tiruriruriru
@@ -361,7 +372,9 @@ Antón tiruriruriru...
             <details>
                 <summary>A la nanita nana</summary>
                 <div class="contenido-expandible">
-                    <audio controls src="nanita.mp3">Tu navegador no soporta audio.</audio>
+                    <a href="https://www.youtube.com/watch?v=E_Ld-sN-A-I" target="_blank" rel="noopener noreferrer" class="btn btn-villancico">
+                        🎶 Escuchar en YouTube
+                    </a>
                     <hr style="margin:15px 0;">
                     <p>
 A la nanita nana, nanita nana,
@@ -404,7 +417,9 @@ bendito sea.
             <details>
                 <summary>Tutaina tuturumaina</summary>
                 <div class="contenido-expandible">
-                    <audio controls src="tutaina.mp3">Tu navegador no soporta audio.</audio>
+                    <a href="https://www.youtube.com/watch?v=i-T-yWbV-F0" target="_blank" rel="noopener noreferrer" class="btn btn-villancico">
+                        🎶 Escuchar en YouTube
+                    </a>
                     <hr style="margin:15px 0;">
                     <p>
 Tutaina tuturumá
@@ -436,7 +451,9 @@ Tutaina...
             <details>
                 <summary>Vamos pastores, vamos</summary>
                 <div class="contenido-expandible">
-                    <audio controls src="pastores.mp3">Tu navegador no soporta audio.</audio>
+                    <a href="https://www.youtube.com/watch?v=o-YQ-P-wKU4" target="_blank" rel="noopener noreferrer" class="btn btn-villancico">
+                        🎶 Escuchar en YouTube
+                    </a>
                     <hr style="margin:15px 0;">
                     <p>
 Vamos pastores, vamos,
@@ -588,15 +605,13 @@ mi Niño adorado,
         </div>
     </section>
 
-   <script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
             
             const pantallas = document.querySelectorAll(".pantalla");
-            // CAMBIO V8.0: Obtenemos el elemento de audio
-            const musicaFondo = document.getElementById("musica-fondo");
-
             let progreso = JSON.parse(localStorage.getItem('novenaProgreso')) || {};
 
+            // Esta es la función V7.0 que arregla el scroll
             function mostrarPantalla(id) {
                 pantallas.forEach(pantalla => {
                     pantalla.classList.remove("activa");
@@ -609,7 +624,7 @@ mi Niño adorado,
                     if (pantallaActiva) {
                         pantallaActiva.scrollIntoView({ behavior: 'auto', block: 'start' });
                     }
-                }, 0);
+                }, 0); 
             }
 
             function actualizarVistaProgreso() {
@@ -633,37 +648,13 @@ mi Niño adorado,
                 if (confirm("¿Estás seguro de que quieres reiniciar tu progreso?")) {
                     progreso = {};
                     localStorage.removeItem('novenaProgreso');
-                    mostrarPantalla('inicio');
+                    mostrarPantalla('inicio'); 
                 }
             }
 
             // --- Asignar Eventos (Event Listeners) ---
-
-            // CAMBIO V8.0: Modificamos el botón "Empezar" para que inicie la música
-            document.getElementById("btn-empezar").addEventListener("click", () => {
-                
-                // 1. Revisa si el audio está listo y no ha empezado
-                if (musicaFondo && musicaFondo.paused) {
-                    // 2. Le ponemos el volumen bajo (20%)
-                    musicaFondo.volume = 0.2;
-                    
-                    // 3. Intentamos reproducir la música
-                    const playPromise = musicaFondo.play();
-                    
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {
-                            // Esto es normal si el navegador lo bloquea,
-                            // pero como viene de un clic, debería funcionar.
-                            console.warn("La música de fondo fue bloqueada por el navegador.");
-                        });
-                    }
-                }
-                
-                // 4. Mostramos la pantalla de la novena (como antes)
-                mostrarPantalla("novenario");
-            });
-
-            // Los demás botones no se tocan
+            // (Esta es la versión simple, sin lógica de música de fondo)
+            document.getElementById("btn-empezar").addEventListener("click", () => mostrarPantalla("novenario"));
             document.getElementById("btn-oraciones").addEventListener("click", () => mostrarPantalla("oraciones"));
             document.getElementById("btn-villancicos").addEventListener("click", () => mostrarPantalla("villancicos"));
             document.getElementById("btn-reiniciar").addEventListener("click", reiniciarProgreso);
