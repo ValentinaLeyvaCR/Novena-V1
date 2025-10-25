@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novenario Navideño</title>
+    <style>
+        /* --- 1. Estilos Generales y Animaciones --- */
+        :root {
+            --color-principal: #0a4a24;
+            --color-secundario: #d42a2a;
+            --color-oro: #f7b731;
+            --color-fondo: #0f1a2e;
+            --color-texto: #333;
+            --color-claro: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        /* CAMBIO: Se elimina 'scroll-behavior: smooth;' para evitar conflictos */
+        html { } 
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-fondo);
+            color: var(--color-claro);
+            line-height: 1.6;
+        }
+
+        /* --- ESTRELLAS PARPADEANTES --- */
+        @keyframes twinkle {
+            0% { opacity: 0.2; } 50% { opacity: 0.8; } 100% { opacity: 0.2; }
+        }
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: transparent; overflow: hidden; z-index: -1;
+        }
+        .star {
+            position: absolute; background: var(--color-claro);
+            border-radius: 50%; animation: twinkle 5s infinite;
+        }
+        .star:nth-child(1) { top: 10%; left: 20%; width: 2px; height: 2px; animation-delay: 1s; }
+        .star:nth-child(2) { top: 30%; left: 80%; width: 1px; height: 1px; animation-delay: 3s; }
+        .star:nth-child(3) { top: 50%; left: 50%; width: 2px; height: 2px; animation-delay: 2s; }
+        .star:nth-child(4) { top: 80%; left: 10%; width: 1px; height: 1px; animation-delay: 4s; }
+        .star:nth-child(5) { top: 60%; left: 90%; width: 1px; height: 1px; animation-delay: 0s; }
+
+        h1, h2 {
+            font-weight: 700; color: var(--color-claro);
+            text-align: center; margin-bottom: 20px;
+        }
+
+        /* --- 2. Estructura de Pantallas --- */
+        .pantalla {
+            display: none; width: 100%;
+            padding: 30px 20px; animation: fadeIn 0.5s ease-in-out;
+        }
+        .pantalla.activa { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #inicio, #final {
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            min-height: 100vh; text-align: center;
+        }
+        .contenedor {
+            max-width: 700px; margin: 20px auto;
+            background: rgba(255, 255, 255, 0.98);
+            color: var(--color-texto); padding: 25px;
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* --- 3. Botones --- */
+        .btn {
+            display: inline-block; background-color: var(--color-oro);
+            color: var(--color-principal); padding: 12px 25px;
+            font-size: 1.1rem; font-weight: 700; text-decoration: none;
+            border: none; border-radius: 50px; cursor: pointer;
+            transition: all 0.3s; text-align: center;
+            width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .btn:hover { background-color: #ffc94d; transform: translateY(-2px); }
+        .btn-secundario {
+            background-color: transparent; color: var(--color-principal);
+            border: 2px solid var(--color-principal);
+        }
+        .btn-secundario:hover { background-color: #e6f3eb; }
+        .btn-volver { margin-top: 25px; }
+        .botones-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+
+        /* --- 4. Pantalla de Inicio (CON TU IMAGEN) --- */
+        #inicio {
+            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('portada-pesebre.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        #inicio h1 { font-size: 3rem; color: var(--color-claro); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        #inicio h2 { font-size: 1.5rem; color: var(--color-claro); font-weight: 400; margin-bottom: 40px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        #inicio .btn { max-width: 300px; }
+
+        /* --- 5. Pantalla del Novenario (SOLO NÚMEROS) --- */
+        .grid-dias {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+        }
+        
+        .dia-card {
+            border: 2px solid var(--color-principal);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-principal);
+            cursor: pointer;
+            position: relative;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .dia-card:hover {
+            transform: scale(1.05);
+            background-color: #e6f3eb;
+        }
+        
+        .dia-card .completado {
+            display: none;
+            font-size: 2.5rem;
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            z-index: 3;
+            color: #28a745;
+            text-shadow: none;
+        }
+
+        .dia-card.done {
+            border-color: #28a745;
+            background-color: #d1e7dd;
+        }
+        .dia-card.done .completado {
+            display: block;
+            opacity: 0.5;
+        }
+
+        /* --- 6. Pantalla de cada Día --- */
+        .contenido-dia h2 {
+            font-size: 2.2rem; margin-bottom: 25px;
+            text-align: left; color: var(--color-principal);
+        }
+        .contenido-dia p { font-size: 1.1rem; text-align: justify; margin-bottom: 15px; }
+
+        /* --- 7. Secciones de Oraciones y Villancicos --- */
+        details {
+            background: #fafafa; border: 1px solid #eee;
+            border-radius: 8px; margin-bottom: 10px; overflow: hidden;
+        }
+        summary {
+            padding: 15px 20px; font-size: 1.2rem;
+            font-weight: 600; color: var(--color-principal);
+            cursor: pointer; list-style: none; position: relative;
+            display: flex; align-items: center;
+        }
+        summary::after {
+            content: '▼'; position: absolute; right: 20px;
+            font-size: 0.9rem; transition: transform 0.3s;
+        }
+        details[open] summary::after { transform: rotate(180deg); }
+        
+        summary .icono {
+            width: 30px;
+            height: 30px;
+            margin-right: 15px;
+            object-fit: contain;
+        }
+        .contenido-expandible {
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid #eee;
+        }
+        .contenido-expandible p {
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif; font-size: 1.1rem;
+        }
+        .contenido-expandible h3 {
+            margin-top: 15px; font-style: italic;
+            font-weight: 500; color: #555;
+        }
+        audio { width: 100%; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <audio id="musica-fondo" src="musica-fondo.mp3" loop preload="auto"></audio>
+
+    <div class="stars">
+        <div class="star"></div><div class="star"></div><div class="star"></div>
+        <div class="star"></div><div class="star"></div>
+    </div>
+
+    <section class="pantalla activa" id="inicio">
+        <h1>Novenario Navideño</h1>
+        <h2>Vivamos juntos la alegría de la Navidad</h2>
+        <button id="btn-empezar" class="btn">Empezar la Novena</button>
+    </section>
+
+    <section class="pantalla" id="novenario">
+        <div class="contenedor">
+            <h2 style="color:var(--color-principal);">Elige el día de la Novena</h2>
+            <div class="grid-dias">
+                <div class="dia-card" data-dia="1"><span>Día 1</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="2"><span>Día 2</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="3"><span>Día 3</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="4"><span>Día 4</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="5"><span>Día 5</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="6"><span>Día 6</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="7"><span>Día 7</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="8"><span>Día 8</span> <span class="completado">✅</span></div>
+                <div class="dia-card" data-dia="9"><span>Día 9</span> <span class="completado">✅</span></div>
+            </div>
+
+            <div class="botones-nav">
+                <button class="btn btn-secundario" id="btn-oraciones">🙏 Oraciones</button>
+                <button class="btn btn-secundario" id="btn-villancicos">🎶 Villancicos</button>
+            </div>
+            <button class="btn btn-volver" data-target="final" style="margin-top: 10px;">✨ Ver Mensaje Final</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia1">
+        <div class="contenedor contenido-dia">
+            <h2>Día Primero</h2>
+            <p>En el principio de los tiempos el Verbo reposaba en el seno de su Padre, en lo más alto de los cielos; allí era la causa, a la par que el modelo de toda la creación. En esas profundidades de una incalculable eternidad permanecía el Niño de Belén. Allí es donde debemos buscar sus principios que jamás han comenzado; de allí debemos datar la genealogía del Eterno, que no tiene antepasados, y contemplar la vida de complacencia infinita que allí llevaba.</p>
+            <p>La vida del Verbo Eterno en el seno de su Padre era una vida maravillosa y sin embargo, misterio sublime, busca otra morada: una mansión creada. No era porque en su mansión eterna faltase algo a su infinita felicidad, sino porque su misericordia infinita anhelaba la redención y la salvación del género humano, que sin él no podría verificarse.</p>
+            <p>El pecado de Adán había
+ofendido a un Dios y esa ofensa infinita no podría ser condonada sino por los méritos del mismo Dios. La raza de Adán había desobedecido y merecido un castigo eterno; era, pues, necesario para salvarla y satisfacer su culpa, que Dios, sin dejar el cielo, tomase la forma del hombre sobre la tierra y con la obediencia a los designios de su Padre, expiase aquella desobediencia, ingratitud y rebeldía.</p>
+            <p>Era necesario en las miras de su amor, que tomase la forma, las debilidades e ignorancia inconcientes de la infancia, para expiar las debilidades e ignorancia sistemáticas del hombre; que creciese para darle crecimiento espiritual; que sufriese, para enseñarle a morir a sus pasiones y a su orgullo y por eso el Verbo Eterno ardiendo en deseos de salvar al hombre resolvió hacerse hombre también y así redimir al culpable.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia2">
+        <div class="contenedor contenido-dia">
+            <h2>Día Segundo</h2>
+            <p>El Verbo Eterno se halla a punto de tomar su naturaleza creada en la santa casa de Nazaret, en donde moraban María y José. Cuando la sombra del secreto divino vino a deslizarse sobre ella, María estaba sola y engolfada en la oración. Pasaba las silenciosas horas de la noche en la unión más estrecha con Dios y mientras oraba el Verbo tomó posesión de su morada creada.</p>
+            <p>Sin embargo, no llegó inopinadamente; antes de presentarse, envió un mensajero que fue el Arcángel San Gabriel, para pedir a María de parte de Dios su consentimiento para la encarnación. El Creador no quiso efectuar este gran misterio sin la aquiescencia de su criatura.</p>
+            <p>Aquel momento fue muy solemne: era potestativo en María el rehusar; con qué adorables delicias, con qué inefable complacencia aguardaría la Santísima Trinidad a que María abriese los labios y pronunciase el fiat que debió de ser suave melodía para sus oídos, y con el cual se conformaba su profunda humildad a la omnipotente voluntad divina.</p>
+            <p>La Virgen inmaculada ha dado su asentimiento. El Arcángel ha desaparecido. Dios se ha revestido de una naturaleza creada; la voluntad eterna está cumplida y la creación completa. En las regiones del mundo angélico estallaba un júbilo inmenso, pero la Virgen María ni lo oía, ni hubiera prestado atención a él. Tenía inclinada la cabeza y su alma estaba sumida en un silencio que se asemejaba al de Dios.</p>
+            <p>El Verbo se había hecho carne y aunque todavía invisible para el mundo, habitaba ya entre los hombres a quienes su inmenso amor había venido a rescatar. No era ya sólo el Verbo Eterno, era el Niño Jesús, revestido de la apariencia humana y justificando ya el elogio que de él han hecho todas las generaciones al llamarle: el más hermoso de los hijos de los hombres.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia3">
+        <div class="contenedor contenido-dia">
+            <h2>Día Tercero</h2>
+            <p>Así había comenzado su vida encarnada el Niño Jesús. Consideremos el alma gloriosa y el santo cuerpo que había tomado, adorándolos profundamente.</p>
+            <p>Admirando en primer lugar el alma de ese divino Niño, consideremos en ella la plenitud de su gracia santificadora, la de su ciencia beatífica y por la cual, desde el primer momento de su vida vio la divina Esencia más claramente que todos los ángeles y leyó lo pasado y lo porvenir con todos sus arcanos conocimientos.</p>
+            <p>No supo nunca por adquisición voluntaria nada que no supiese por infusión desde el primer momento de su ser; pero él adoptó todas las enfermedades de nuestra naturaleza a que dignamente podía someterse aún cuando no fuesen necesarias para la grande obra que debía cumplir.</p>
+            <p>Pidámosle que sus divinas facultades suplan la debilidad de las nuestras y les dé nueva energía; que su memoria nos enseñe a recordar sus beneficios; su entendimiento a pensar en él, a no hacer sino su voluntad, lo que él quiere y en servicio suyo.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia4">
+        <div class="contenedor contenido-dia">
+            <h2>Día Cuarto</h2>
+            <p>Desde el seno de su Madre comenzó el Niño Jesús a poner en práctica su eterna sumisión a Dios, que continuó sin la menor interrupción durante toda su vida. Adoraba a su Eterno Padre, le amaba, se sometía a su voluntad; aceptaba con resignación el estado en que se hallaba, conociendo toda su debilidad, toda su humillación, todas sus incomodidades.</p>
+            <p>¿Quién de nosotros quisiera retroceder a un estado semejante con el pleno goce de la razón y de la reflexión? ¿Quién pudiera sostener a sabiendas un martirio tan prolongado, tan penoso de todas maneras?</p>
+            <p>Por ahí entró el Divino Niño en su dolorosa y humillante carrera; así empezó a anonadarse delante de su Padre; a enseñarnos lo que Dios merece por parte de su criatura; a expiar nuestro orgullo, origen de todos nuestros pecados y hacernos sentir toda la criminalidad y el desorden de este orgullo.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia5">
+        <div class="contenedor contenido-dia">
+            <h2>Día Quinto</h2>
+            <p>Ya hemos visto la vida que llevaba el Niño Jesús en el seno de su purísima Madre; veamos hoy también la vida que llevaba también María, durante el mismo espacio de tiempo.</p>
+            <p>Necesidad hay de que nos detengamos en ella si queremos comprender, en cuanto es posible a nuestra limitada capacidad, los sublimes misterios de la Encarnación y el modo como hemos de corresponder a ellos.</p>
+            <p>María no cesaba de suspirar por el momento en que gozaría de esa visión beatífica terrestre: la faz de Dios encarnado. Estaba a punto de ver aquella faz humana que debía iluminar el cielo durante toda la eternidad. Iba a leer el amor filial en aquellos mismos ojos cuyos rayos debían esparcir para siempre la felicidad en millones de elegidos. Iba a ver aquel rostro todos los días, a todas horas, cada instante durante muchos años. Iba a verle en la ignorancia aparente de la infancia, en los encantos particulares de la juventud y en la serenidad reflexiva de la edad madura.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia6">
+        <div class="contenedor contenido-dia">
+            <h2>Día Sexto</h2>
+            <p>Jesús había sido concebido en Nazaret, domicilio de José y María, y allí era de creerse que había de nacer, según todas las probabilidades. Más Dios lo tenía dispuesto de otra manera y los profetas habían anunciado que el Mesías nacería en Belén de Judá, ciudad de David.</p>
+            <p>Para que se cumpliera esta predicción, Dios se sirvió de un medio que no parecía tener ninguna relación con este objeto, a saber: la orden dada por el emperador Augusto de que todos los súbditos del imperio romano se empadronasen en el lugar de donde eran originarios.</p>
+            <p>María y José, como descendientes que eran de David, no estaban dispensados de ir a Belén; y ni la situación de la Virgen Santísima , ni la necesidad en que estaba José del trabajo diario que le aseguraba la subsistencia, pudo eximirles de este largo y penoso viaje, en la estación más rigurosa e incómoda del año.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia7">
+        <div class="contenedor contenido-dia">
+            <h2>Día Séptimo</h2>
+            <p>Representémonos el viaje de María y José hacia Belén, llevando consigo, aún no nacido, al creador del Universo, hecho hombre.</p>
+            <p>Contemplemos la humildad y la obediencia de ese Divino Niño, que aunque de raza judía y habiendo amado durante siglos a su pueblo con una predilección inexplicable obedece así a un príncipe extranjero que forma el censo de población de su provincia, como si hubiese para él en esa circunstancia algo que le halagase, y quisiese apresurarse a aprovechar la ocasión de hacerse empadronar oficial y auténticamente como súbdito en el momento en que venía al mundo.</p>
+            <p>¿No es extraño que la humillación, que causa tan invencible repugnancia a la criatura, parezca ser la única cosa creada que tenga atractivos para el Creador? ¿No nos enseñará la humildad de Jesús a amar esa hermosa virtud?</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia8">
+        <div class="contenedor contenido-dia">
+            <h2>Día Octavo</h2>
+            <p>Llegan a Belén José y María, buscando hospedaje en los mesones; pero no lo encuentran, ya por hallarse todos ocupados, ya porque se les desechase a causa de su pobreza. Empero, nada puede turbar la paz interior de los que están fijos en Dios.</p>
+            <p>Si José experimentaba tristeza cuando era rechazado de casa en casa, porque pensaba en María y en el Niño, sonreíase también con santa tranquilidad cuando fijaba la mirada en su casta esposa. El Niño, aún no nacido, regocijábase de aquellas negativas, que eran el preludio de sus humillaciones venideras.</p>
+            <p>Cada voz áspera, el ruido de cada puerta que se cerraba ante ellos, era una dulce melodía para sus oídos. Eso era lo que había venido a buscar. El deseo de esas humillaciones era lo que había contribuido a hacerle tomar la forma humana.</p>
+            <p>¡Oh Divino Niño de Belén! Esos días que tantos han pasado en fiestas y diversiones o descansando muellemente en cómodas y ricas mansiones, han sido para vuestros padres un día de fatiga y vejaciones de toda clase. ¡Ay! el espíritu de Belén es el de un mundo que ha olvidado a Dios.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="dia9">
+        <div class="contenedor contenido-dia">
+            <h2>Día Noveno</h2>
+            <p>La noche ha cerrado del todo en las campiñas de Belén. Desechados por los hombres y viéndose sin abrigo, María y José han salido de la inhospitalaria población y se han refugiado en una gruta que se encontraba al pie de la colina.</p>
+            <p>Seguía a la Reina de los ángeles el jumento que les había servido de humilde cabalgadura durante el viaje y en aquella cueva hallaron un manso buey, dejado allí probablemente por alguno de los caminantes que habían ido a buscar hospedaje en la ciudad.</p>
+            <p>El Divino Niño, desconocido por sus criaturas racionales, va a tener que acudir a las irracionales para que calienten con su tibio aliento la atmósfera helada de esa noche de invierno y le manifiesten con esto su humilde actitud, el respeto y la adoración que le había negado Belén.</p>
+            <p>La rojiza linterna que José tenía en la mano iluminaba tenuemente ese pobrísimo recinto, ese pesebre lleno de paja, que es figura profética de las maravillas del altar y de la íntima y prodigiosa unión eucarística que Jesús ha de contraer con los hombres. María está en adoración en medio de la gruta, y así van pasando silenciosamente las horas de esa noche llena de misterio.</p>
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+
+    <section class="pantalla" id="villancicos">
+        <div class="contenedor">
+            <h2 style="color:var(--color-principal);">🎶 Villancicos</h2>
+            
+            <details>
+                <summary>Antón tiruriruriru</summary>
+                <div class="contenido-expandible">
+                    <audio controls src="anton.mp3">Tu navegador no soporta audio.</audio>
+                    <hr style="margin:15px 0;">
+                    <p>
+Antón tiruriruriru
+Antón tirulirurá
+Antón tiruriruriru
+Antón tirurirurá
+Jesús al pesebre vamos a adorar (bis).
+
+Duérmete niño chiquito
+que la noche viene ya
+cierra pronto tus ojitos
+que el viento te arrullará
+Antón tiruriruriru...
+
+Duérmete niño chiquito
+que tu madre velará
+cierra pronto tus ojitos
+porque la entristecerás
+Antón tiruriruriru...
+                    </p>
+                </div>
+            </details>
+
+            <details>
+                <summary>A la nanita nana</summary>
+                <div class="contenido-expandible">
+                    <audio controls src="nanita.mp3">Tu navegador no soporta audio.</audio>
+                    <hr style="margin:15px 0;">
+                    <p>
+A la nanita nana, nanita nana,
+nanita ea, mi Jesús tiene sueño,
+bendito sea, bendito sea.
+
+Fuentecilla que corres
+clara y sonora
+ruiseñor que en la selva
+cantando lloras
+calla mientras la cuna
+se balancea
+a la nanita nana, nanita ea
+
+A la nanita nana, nanita nana...
+
+Manojitode rosas
+y de alelíes
+¿qué es lo que estás soñando
+que te sonríes?
+cuales son tus sueños,
+dilo alma mía
+más, ¿qué es lo que murmuras?
+Eucaristía
+
+A la nanita nana, nanita nana...
+
+Pajaritos y fuentes,
+auras y brisas
+respetad ese sueño
+y esas sonrisas
+callad mientras la cuna
+se balancea
+que el niño está soñando,
+bendito sea.
+                    </p>
+                </div>
+            </details>
+
+            <details>
+                <summary>Tutaina tuturumaina</summary>
+                <div class="contenido-expandible">
+                    <audio controls src="tutaina.mp3">Tu navegador no soporta audio.</audio>
+                    <hr style="margin:15px 0;">
+                    <p>
+Tutaina tuturumá
+tutaina tuturumaina
+tutaina tuturumá turumá
+tutaina tuturumaina
+
+Los pastores de Belén
+vienen a adorar al niño
+la Virgen y San José
+los reciben con cariño
+Tutaina...
+
+Tres reyes vienen también
+con incienso, mirra y oro
+a ofrendar a Dios su bien
+como el más grande tesoro
+Tutaina...
+
+Vamos todos a cantar
+con amor y alegría
+porque acaba de llegar
+de los cielos el Mesías
+Tutaina...
+                    </p>
+                </div>
+            </details>
+
+            <details>
+                <summary>Vamos pastores, vamos</summary>
+                <div class="contenido-expandible">
+                    <audio controls src="pastores.mp3">Tu navegador no soporta audio.</audio>
+                    <hr style="margin:15px 0;">
+                    <p>
+Vamos pastores, vamos,
+vamos a Belén,
+a ver en aquel niño
+la gloria del Edén.
+
+Ese precioso niño
+yo me muero por él
+sus ojitos me encantan,
+su boquita también.
+El padre lo acaricia
+la madre mira en él,
+y los dos extasiados
+contemplan aquel ser (bis)
+
+Vamos pastores, vamos...
+
+Yo pobre pastorcillo,
+al niño le diré,
+no la buenaventura:
+eso no puede ser.
+Le diré me perdone
+lo mucho que pequé
+y en la mansión eterna
+un ladito me dé (bis).
+
+Vamos pastores, vamos...
+                    </p>
+                </div>
+            </details>
+
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="oraciones">
+        <div class="contenedor">
+            <h2 style="color:var(--color-principal);">🙏 Oraciones Generales</h2>
+
+            <details>
+                <summary>
+                    Oración para todos los días
+                </summary>
+                <div class="contenido-expandible">
+                    <p>Benignísimo Dios de infinita caridad que tanto amasteis a los hombres, que les disteis en vuestro hijo la mejor prenda de vuestro amor para que hecho nombre en las entrañas de una Virgen naciese en un pesebre para nuestra salud y remedio; yo, en nombre de todos los mortales, os doy infinitas gracias por tan soberano beneficio.</p>
+                    <p>En retorno de él os ofrezco la pobreza, humildad y demás virtudes de vuestro Hijo humanado, suplicándolos por sus divinos méritos, por las incomodidades con que nació y por las tiernas lágrimas que derramó en el pesebre, que dispongáis nuestros corazones con humildad profunda, con amor encendido, con total desprecio de todo lo terreno, para que Jesús recién nacido tenga en ellos su cuna y more eternamente.</p>
+                    <h3>(Se reza tres veces el Gloria al Padre)</h3>
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    <img class="icono" src="icono-virgen.png" alt="Virgen María">
+                    Oración a la Santísima Virgen
+                </summary>
+                <div class="contenido-expandible">
+                    <p>Soberana María, que por vuestras grandes virtudes y especialmente por vuestra humildad, merecisteis que todo un Dios os escogiese por madre suya; os suplico que vos misma preparéis y dispongáis mi alma y la de todos los que en este tiempo hiciesen esta novena, para el nacimiento espiritual de vuestro adorado Hijo.</p>
+                    <p>¡Oh dulcísima Madre! Comunicadme algo del profundo recogimiento y divina ternura con que le aguardasteis Vos, para que nos hagáis menos indignos de verle, amarle y adorarle por toda la eternidad. Amén.</p>
+                    <h3>(Se reza tres veces el Ave María)</h3>
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    <img class="icono" src="icono-sanjose.png" alt="San José">
+                    Oración a San José
+                </summary>
+                <div class="contenido-expandible">
+                    <p>¡Oh Santísimo José, esposo de María y padre adoptivo de Jesús!. Infinitas gracias doy a Dios porque os escogió para tan altos ministerios y os adornó con todos los dones proporcionados a tan excelente grandeza. Os ruego, por el amor que tuvisteis al Divino Niño, me abraséis en fervorosOS deseos de verle y recibirle sacramentalmente, mientras en su divina esencia le veo y le gozo en el cielo.</p>
+                    <p>Amén.</p>
+                    <h3>(Se reza el Padre Nuestro, el Ave María y Gloria)</h3>
+                </div>
+            </details>
+            
+            <details>
+                <summary>
+                    <img class="icono" src="icono-ninojesus.png" alt="Niño Jesús">
+                    Oración al Niño Jesús
+                </summary>
+                <div class="contenido-expandible">
+                    <p>Acordaos, ioh dulcísimo Niño Jesús!, que dijisteis a la venerable Margarita del Santísimo Sacramento, y en persona suya a todos vuestros devotos estas palabras tan consoladoras para nuestra pobre humanidad agobiada y doliente: "Todo lo que quieras pedir, pídelo por los méritos de mi infancia y nada te será negado".</p>
+                    <p>Llenos de confianza en Vos, oh Jesús, que sois la misma verdad, venimos a exponeros toda nuestra miseria. Ayudadnos a llevar una vida santa, para conseguir una eternidad bienaventurada. Concedednos por los méritos de vuestra encarnación y de vuestra infancia, la gracia de la cual necesitamos tanto.</p>
+                    <p>Nos entregamos a Vos, ioh Niño omnipotente! seguros de que no quedará frustrada nuestra esperanza y de que en virtud de vuestra divina promesa, acogeréis y despacharéis favorablemente nuestra súplica. Amén.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    Gozos
+                </summary>
+                <div class="contenido-expandible">
+                    <p>
+Dulce Jesús mío
+mi Niño adorado,
+¡Ven a nuestras almas!
+¡Ven no tardes tanto!
+
+¡Oh Sapiencia suma del Dios soberano, que a infantil alcance te rebajas sacro! ¡Oh Divino Niño, ven para enseñarnos la prudencia que hace verdaderos sabios!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Oh Adonaí potente que a Moisés hablando, de Israel al pueblo disteis los mandatos! ¡Ah! ven prontamente para rescatarnos, y que un Niño débil muestre fuerte brazo!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Oh raíz sagrada de José, que en lo alto presentas al orbe tu fragante nardo! ¡Dulcísimo Niño que has sido llamado lirio de los valles, bella flor del campo!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Llave de David que abre al desterrado las cerradas puertas de regio palacio! ¡Sácanos Oh Niño con tu blanca mano, de la cárcel triste que labró el pecado!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Oh lumbre de Oriente, sol de eternos rayos, que entre las tinieblas tu esplendor veamos! ¡Niño tan precioso, dicha del cristiano, luzca la sonrisa de tus dulces labios!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Espejo sin mancha, Santo de los santos, sin igual imagen del Dios Soberano! ¡Borra nuestras culpas, salva al desterrado y, en forma de Niño, da al mísero amparo!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Rey de las naciones, Emmanuel preclaro, de Israel anhelo, Pastor del rebaño! ¡niño que apacientas con suave cayado ya la oveja arisca, ya el cordero manso!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Ábranse los cielos y llueva de lo alto bienhechor rocío, como riego santo! ven hermoso Niño, ven Dios humanado! ¡luce hermosa estrella, brota, flor del campo!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Ven, que ya María previene sus brazos, de su Niño vean, en tiempo cercano! ¡ven, que ya José, con anhelo sacro, se dispone a hacerse de tu amor sagrario!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Del débil auxilio, del doliente amparo, consuelo del triste, luz del desterrado! ¡vida de mi vida, mi dueño adorado, mi constante amigo, mi divino hermano!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Vé ante mis ojos de tí enamorados! ¡bese ya tus plantas! ¡bese ya tus manos! ¡prosternado en tierra, te tiendo los brazos, y aún más que mis frases te dice mi llanto!
+¡Ven a nuestras almas! ¡Ven no tardes tanto!
+
+¡Ven, Salvador nuestro, por quien suspiramos, Ven a nuestras almas, ven no tardes tanto!
+                    </p>
+                </div>
+            </details>
+
+            <button class="btn btn-volver" data-target="novenario">Volver a los días</button>
+        </div>
+    </section>
+
+    <section class="pantalla" id="final">
+        <div class="contenedor" style="text-align: center;">
+            <h1 style="color:var(--color-principal);">¡Feliz Navidad!</h1>
+            <p style="font-size: 1.3rem;">Que el Niño Jesús nazca en nuestros corazones.</p>
+            <img src="portada-pesebre.jpg" style="width:100%; max-width: 400px; border-radius: 10px; margin: 20px 0; border: 2px solid var(--color-oro);">
+            
+            <button id="btn-reiniciar" class="btn">Reiniciar Novenario</button>
+            <button class="btn btn-volver" data-target="novenario" style="background:transparent; border: 2px solid var(--color-principal); color: var(--color-principal); margin-top: 10px;">Volver</button>
+        </div>
+    </section>
+
+   <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            const pantallas = document.querySelectorAll(".pantalla");
+            // CAMBIO V8.0: Obtenemos el elemento de audio
+            const musicaFondo = document.getElementById("musica-fondo");
+
+            let progreso = JSON.parse(localStorage.getItem('novenaProgreso')) || {};
+
+            function mostrarPantalla(id) {
+                pantallas.forEach(pantalla => {
+                    pantalla.classList.remove("activa");
+                });
+                const pantallaActiva = document.getElementById(id);
+                if (pantallaActiva) {
+                    pantallaActiva.classList.add("activa");
+                }
+                setTimeout(() => {
+                    if (pantallaActiva) {
+                        pantallaActiva.scrollIntoView({ behavior: 'auto', block: 'start' });
+                    }
+                }, 0);
+            }
+
+            function actualizarVistaProgreso() {
+                document.querySelectorAll('.dia-card').forEach(card => {
+                    const dia = card.dataset.dia;
+                    if (progreso[dia]) {
+                        card.classList.add("done");
+                    } else {
+                        card.classList.remove("done");
+                    }
+                });
+            }
+
+            function marcarDiaCompletado(dia) {
+                progreso[dia] = true;
+                localStorage.setItem('novenaProgreso', JSON.stringify(progreso));
+                actualizarVistaProgreso();
+            }
+
+            function reiniciarProgreso() {
+                if (confirm("¿Estás seguro de que quieres reiniciar tu progreso?")) {
+                    progreso = {};
+                    localStorage.removeItem('novenaProgreso');
+                    mostrarPantalla('inicio');
+                }
+            }
+
+            // --- Asignar Eventos (Event Listeners) ---
+
+            // CAMBIO V8.0: Modificamos el botón "Empezar" para que inicie la música
+            document.getElementById("btn-empezar").addEventListener("click", () => {
+                
+                // 1. Revisa si el audio está listo y no ha empezado
+                if (musicaFondo && musicaFondo.paused) {
+                    // 2. Le ponemos el volumen bajo (20%)
+                    musicaFondo.volume = 0.2;
+                    
+                    // 3. Intentamos reproducir la música
+                    const playPromise = musicaFondo.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            // Esto es normal si el navegador lo bloquea,
+                            // pero como viene de un clic, debería funcionar.
+                            console.warn("La música de fondo fue bloqueada por el navegador.");
+                        });
+                    }
+                }
+                
+                // 4. Mostramos la pantalla de la novena (como antes)
+                mostrarPantalla("novenario");
+            });
+
+            // Los demás botones no se tocan
+            document.getElementById("btn-oraciones").addEventListener("click", () => mostrarPantalla("oraciones"));
+            document.getElementById("btn-villancicos").addEventListener("click", () => mostrarPantalla("villancicos"));
+            document.getElementById("btn-reiniciar").addEventListener("click", reiniciarProgreso);
+
+            document.querySelectorAll(".dia-card").forEach(card => {
+                card.addEventListener("click", () => {
+                    const dia = card.dataset.dia;
+                    marcarDiaCompletado(dia);
+                    mostrarPantalla("dia" + dia);
+                });
+            });
+
+            document.querySelectorAll(".btn-volver").forEach(boton => {
+                boton.addEventListener("click", (e) => {
+                    const target = e.target.dataset.target;
+                    mostrarPantalla(target);
+                });
+            });
+
+            // --- Inicialización ---
+            actualizarVistaProgreso();
+            mostrarPantalla("inicio");
+        });
+    </script>
+
+</body>
+</html>
